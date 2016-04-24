@@ -1,53 +1,57 @@
 #coding=utf-8
 __author__ = 'zhangxa'
 
+import sys
 from curl import Curl
 import pycurl
 
-from html.parser import HTMLParser
-from download.DownFile import down_file
+from htmlParser.htmlParser import UrlHtmlParser
+from download.downFile import DownFile
+from urlHandler.urlHandler import UrlBaseHandler
+from urlQueue.urlQueue import LockUrlQueue
+from workers.worker import BaseUrlWorker
+import yaml
+import pymongo
+"""
+start_url = "http://www.pcgames.com.cn/"
 
-USER_AGENT="Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+urlQ = UrlQueue()
+urlQ.addUrl(start_url)
+urlHandler = UrlBaseHandler(urlQ)
+urlHandler.loop()
+"""
 
-c = Curl()
-c.set_url("http://www.jianshu.com/")
-c.set_option(pycurl.USERAGENT,USER_AGENT)
-data = c.get()
-class MyHTMLParser(HTMLParser):
+config = {}
+try:
+    with open("config.yaml","r") as fin:
+        config = yaml.load(fin)
+except:
+    print("can't find config.yaml file")
+    sys.exit(0)
 
-    def handle_starttag(self, tag, attrs):
-        pass
+client = pymongo.MongoClient()
+database = client[config["database"]["spiderQueue"]]
 
-    def handle_endtag(self, tag):
-       pass
+print(client,database)
+"""
+info = {'words': '9345', 'name': '我行我素的兔', 'articles': '6', 'beliked': '594', 'follows': '34', 'fans': '204'}
+print(database)
+database.jianshu_users.insert(info)
 
-    def handle_startendtag(self, tag, attrs):
-        if tag == "img":
-            for attr in attrs:
-                if attr[0] == 'src':
-                    url = attr[1].split('/')
-                    for ele in url:
-                        if 'jpg' in ele.lower():
-                            down_file(attr[1],ele.split('?')[0])
+doc = database.jianshu_users.find_one()
+print(doc)
+"""
+"""
+urlQ = LockUrlQueue()
+urlQ.addUrl("http://www.jianshu.com")
+workers = []
+nums = int(config["workers_num"])
+for _ in range(nums):
+    work = BaseUrlWorker(urlQ,database)
+    work.start()
+    workers.append(work)
 
-    def handle_data(self, data):
-        pass
-
-    def handle_comment(self, data):
-        pass
-
-    def handle_entityref(self, name):
-        pass
-
-    def handle_charref(self, name):
-        pass
-
-parser = MyHTMLParser()
-parser.feed(data.decode("UTF-8"))
-parser.close()
-
-
-
-
-
-
+for worker in workers:
+    worker.join()
+    print("work exit",worker)
+"""
