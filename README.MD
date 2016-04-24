@@ -32,4 +32,4 @@ pip install redis
 pip install motor
 
 ÔËÐÐ:
-python anger6Spider/main.py
+python anger6Spider/worker.py
