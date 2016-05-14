@@ -13,8 +13,6 @@ from urllib.parse import urlunparse
 
 import pycurl
 from urllib.parse import urlparse
-
-import os
 """
 A BaseSpider only parse all the urls in a html and store it in _url_lists which can be get by call urlLists.
 if a subclass want to do something else he should override the realWork function.
@@ -25,10 +23,9 @@ class BaseSpider:
         self.env = env
         self.app = application
         self._url_lists = []
-        self.parse_url = True
+        self.parse_url = False
         if 'text' in self.env['mine']:   #we only parse url in a page when the content-type is text/html.
             self.parse_url = True
-        self.parse_url_own = False #only parese the url belong to url.scheme
         self.initialize(**kwargs)
 
     #a hook for subclass to initialize
@@ -46,21 +43,6 @@ class BaseSpider:
     def realWork(self):
         pass
 
-    #find all urls in a soup
-    def getUrlBySoup(self,soup):
-        a_tags = soup.find_all()
-        for a_tag in a_tags:
-            attrs = a_tag.attrs
-            for attr in attrs:
-                if attr in ('href','src','#src','#src2'): #find a url,some url likes javascript:void(null) are not filter
-                    url = url_path = a_tag[attr]
-                    if url_path.startswith("//"):
-                        url_path = "http:"+url_path
-                    if url_path.startswith("http:"):
-                        self._url_lists.append(url_path)
-                    else:
-                        Log4Spider.errLog("Find a unknown url:[[[",url,"]]]")
-
     @gen.coroutine
     def _urlWork(self):
         AsyncHTTPClient.configure(CurlAsyncHTTPClient)
@@ -75,16 +57,13 @@ class BaseSpider:
         for a_tag in a_tags:
             attrs = a_tag.attrs
             for attr in attrs:
-                Log4Spider.debugLog("tag: ",a_tag,"attr:",attr)
                 if attr in ('href','src','#src','#src2'): #find a url,some url likes javascript:void(null) are not filter
                     url = url_path = a_tag[attr]
-                    url_path = url_path.replace("//","/")
                     if url_path.startswith("/"):
                         url_parse = self.env['urlparse']
                         url = urlunparse([url_parse.scheme,url_parse.netloc,url_path,"","",""])
                     if url.startswith("http"):
-                        if not self.parse_url_own or url_parse.netloc in url:
-                            self._url_lists.append(url)
+                        self._url_lists.append(url)
                     else:
                         Log4Spider.errLog("Find a unknown url:[[[",url,"]]]")
 
@@ -107,12 +86,8 @@ class PicDownSpider(BaseSpider):
                 parse = urlparse(self.env['url'])
                 path = parse.path
                 pic_name = parse.netloc + path.replace("/","-")
-                static_path = self.app.settings["static_path"]
-                if not os.path.exists(static_path):
-                    os.mkdir(static_path)
-                pic_path = "%s/%s"%(self.app.settings["static_path"],pic_name)
-                Log4Spider.warnLog("PicDown path: ",pic_path)
-                obj.setopt(pycurl.WRITEFUNCTION,open(pic_path,"wb").write)
+                Log4Spider.warnLog("PicDown url: ",self.env['url'])
+                obj.setopt(pycurl.WRITEFUNCTION,open(pic_name,"wb").write)
             httpCli = AsyncHTTPClient()
             try:
                 respone = yield httpCli.fetch(self.env['url'],prepare_curl_callback=prepare_cul_opts)

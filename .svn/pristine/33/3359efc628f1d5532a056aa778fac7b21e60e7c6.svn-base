@@ -1,7 +1,5 @@
 __author__ = 'zhangxa'
 
-import sys
-
 from tornado.ioloop import IOLoop
 from tornado.web import _unquote_or_none
 from tornado import gen
@@ -12,9 +10,6 @@ from anger6Spider.application import Application
 from datetime import timedelta
 from anger6Spider.env import SpiderEnv
 from anger6Spider.spiderQueue.redisqueue import RedisQueue
-
-import motor
-
 """
 A Worker doing the main logic in a spider,do things below:
 1.fetch a url from a spiderQueue
@@ -76,9 +71,10 @@ class Worker:
                 continue
 
             self._find_url_handler(url)
-            Log4Spider.infoLog(self,"url: ",url," --- class: ",self.handler_class)
+            Log4Spider.infoLog(self,"url: ",url,"---class: ",self.handler_class)
             spider = self.handler_class(env,self.application,**self.handler_kwargs)
             yield spider.work()
+            Log4Spider.debugLog("spider.work()")
             for url in spider.urlLists:
                     Log4Spider.debugLog(self,"put url:",url)
                     yield self.queue.put(url)
@@ -92,35 +88,18 @@ def main():
                 "db": 0
     }
 
-    try:
-        client = motor.MotorClient("mongodb://localhost:27017/")
-        database = client['jd_db']
-    except:
-        print("mongodb init failed")
-        sys.exit(0)
-
-    app_settings = {
-        "static_path":"static",
-        "database":database
-    }
-
     app = Application([
-        (r"^http://www.jd.com", "anger6Spider.spiders.jd_spiders.Jd_Home_Spider"),
-        (r"^http://list.jd.com.*", "anger6Spider.spiders.jd_spiders.Jd_List_Spider"),
-        (r"^http://channel.jd.com.*", "anger6Spider.spiders.jd_spiders.Jd_Channel_Spider"),
-    ],**app_settings)
+        (r"^http://.*$", "anger6Spider.spiders.spider.PicDownSpider")
+    ])
 
     cocurrency = 10
-
-
 
     from anger6Spider.spiderQueue.redisqueue import RedisQueue
     queue = RedisQueue(**settings)
     queue._create_redis_cli()
-    #yield queue.put("http://www.jianshu.com")
-    #yield queue.put("http://www.jd.com")
-    #yield queue.put("http://www.ivsky.com")
+    yield queue.put("http://www.jianshu.com")
     yield queue.put("http://www.jd.com")
+    yield queue.put("http://www.ivsky.com")
 
     workers = []
     for _ in range(cocurrency):

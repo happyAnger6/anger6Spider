@@ -2,7 +2,6 @@ __author__ = 'zhangxa'
 
 from anger6Spider.util.logTools import log_wrap
 
-@log_wrap("dataLog",7)
 @log_wrap("errLog",6)
 @log_wrap("warnLog",5)
 @log_wrap("downLog",4)

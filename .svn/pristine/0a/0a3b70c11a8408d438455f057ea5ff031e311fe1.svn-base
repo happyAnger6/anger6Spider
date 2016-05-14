@@ -4,7 +4,7 @@ import re
 
 from tornado.web import URLSpec
 from anger6Spider.log4s import Log4Spider
-from concurrent.futures import ThreadPoolExecutor
+
 """
   A dictionary may be passed as the third element of the tuple,
     which will be used as keyword arguments to the handler's
@@ -19,7 +19,6 @@ class Application:
         self.handlers = []
         self.named_handlers = {}
         self.settings = settings
-        self.executor = ThreadPoolExecutor(5)
         if handlers:
             for handler in handlers:
                 self.add_handler(handler)
