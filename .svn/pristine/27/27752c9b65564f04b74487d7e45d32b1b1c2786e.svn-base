@@ -1,9 +1,0 @@
-"database":
-  "host": "localhost:"
-  "port": !!int "27017"
-  "db": "anger6_spider"
-"workers_num": !!int "8"
-"queue":
-  "db": !!int "0"
-  "host": "localhost"
-  "port": !!int "6379"
