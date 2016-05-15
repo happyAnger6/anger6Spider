@@ -105,12 +105,14 @@ def main():
     }
 
     app = Application([
-        (r"^http://www.jd.com", "anger6Spider.spiders.jd_spiders.Jd_Home_Spider"),
-        (r"^http://list.jd.com.*", "anger6Spider.spiders.jd_spiders.Jd_List_Spider"),
-        (r"^http://channel.jd.com.*", "anger6Spider.spiders.jd_spiders.Jd_Channel_Spider"),
+        (r"^http://www\.jd\.com", "anger6Spider.spiders.jd_spiders.Jd_Home_Spider"),
+        (r"^http://list\.jd\.com.*", "anger6Spider.spiders.jd_spiders.Jd_BaseSpider"),
+        (r"^http://channel\.jd\.com.*", "anger6Spider.spiders.jd_spiders.Jd_BaseSpider"),
+        (r"^http://search\.jd\.com/search?.*", "anger6Spider.spiders.jd_spiders.Jd_BaseSpider"),
+        (r"^http://item\.jd\.com.*", "anger6Spider.spiders.jd_spiders.Jd_Item_Spider"),
     ],**app_settings)
 
-    cocurrency = 10
+    cocurrency = 20
 
 
 
@@ -120,7 +122,7 @@ def main():
     #yield queue.put("http://www.jianshu.com")
     #yield queue.put("http://www.jd.com")
     #yield queue.put("http://www.ivsky.com")
-    yield queue.put("http://www.jd.com")
+    #yield queue.put("http://www.jd.com")
 
     workers = []
     for _ in range(cocurrency):
